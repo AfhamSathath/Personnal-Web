@@ -1,8 +1,10 @@
-// skillRoutes.js
 import express from "express";
-import { createSkill, updateSkill, assignSkill } from "../Controllers/skillController.js";
+import { getSkills, addSkill, updateSkill, deleteSkill } from "../Controllers/skillController.js";
 const router = express.Router();
-router.post("/", createSkill);
+
+router.get("/", getSkills);
+router.post("/", addSkill);
 router.put("/:id", updateSkill);
-router.post("/assign", assignSkill);
+router.delete("/:id", deleteSkill);
+
 export default router;

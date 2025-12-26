@@ -7,8 +7,9 @@ import rateLimit from "express-rate-limit";
 
 import personnelRoutes from "./src/routes/personnelRoutes.js";
 import skillRoutes from "./src/routes/skillRoutes.js";
-import projectRoutes from "./src/routes/projectRoutes.js";
+
 import matchingRoutes from "./src/routes/matchingRoutes.js";
+import personnelSkillRoutes from "./src/routes/personnelSkillRoutes.js";
 
 dotenv.config();
 
@@ -49,14 +50,23 @@ const limiter = rateLimit({
     error: "Too many requests from this IP, please try again after 15 minutes"
   }
 });
-
 app.use(limiter);
+
+// --- Disable caching globally to fix 304 responses ---
+app.use((req, res, next) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  res.setHeader("Surrogate-Control", "no-store");
+  next();
+});
 
 // Routes
 app.use("/api/personnel", personnelRoutes);
 app.use("/api/skills", skillRoutes);
-app.use("/api/projects", projectRoutes);
+
 app.use("/api/match", matchingRoutes);
+app.use("/api/personnel-skills", personnelSkillRoutes);
 
 // Health Check Endpoint
 app.get("/api/health", (req, res) => {
@@ -70,7 +80,7 @@ app.get("/api/health", (req, res) => {
 });
 
 // 404 Handler
-app.use((req, res, next) => {
+app.use((req, res) => {
   res.status(404).json({
     error: "Not Found",
     message: `Cannot ${req.method} ${req.originalUrl}`,
@@ -101,8 +111,7 @@ app.use((err, req, res, next) => {
 
 // Server Startup
 const PORT = process.env.PORT || 5000;
-
-const server = app.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`
   ============================================
   🚀  SkillMatch Backend Server Started
@@ -121,9 +130,5 @@ const server = app.listen(PORT, () => {
   ============================================
   `);
 });
-
-
-
-
 
 export default app;

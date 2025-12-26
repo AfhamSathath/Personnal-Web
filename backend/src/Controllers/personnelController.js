@@ -1,4 +1,5 @@
 import { personnelModel } from "../models/personnelModel.js";
+import { db } from "../db.js";
 
 // Get all personnel
 export const getAllPersonnel = async (req, res) => {

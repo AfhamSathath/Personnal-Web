@@ -1,34 +1,65 @@
-import React from "react";
-import { Link, NavLink } from "react-router-dom";
-import { Users, Brain, Briefcase, Layers , Home } from "lucide-react";
+// src/components/Navbar.jsx
+import React, { useEffect, useState } from "react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Users, Brain, Briefcase, Layers, Home } from "lucide-react";
+import axios from "axios";
 
 const Navbar = () => {
+  const navigate = useNavigate();
+  const [projects, setProjects] = useState([]);
+  const [selectedProjectId, setSelectedProjectId] = useState("");
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/projects");
+        setProjects(res.data);
+      } catch (err) {
+        console.error("Failed to fetch projects", err);
+      }
+    };
+    fetchProjects();
+  }, []);
+
+  const handleProjectChange = (e) => {
+    const id = e.target.value;
+    setSelectedProjectId(id);
+    if (id) navigate(`/project-skills/${id}`);
+  };
+
   return (
     <header className="sticky top-0 z-50 bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-700 shadow-lg">
       <nav className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
 
-        {/* Logo / Brand */}
+        {/* Logo */}
         <Link to="/" className="flex items-center gap-2 text-white">
           <Layers size={26} />
-          <span className="text-xl font-bold tracking-wide">
-            SkillMatch Pro
-          </span>
+          <span className="text-xl font-bold tracking-wide">SkillMatch Pro</span>
         </Link>
 
-        {/* Navigation Links */}
+        {/* Navigation */}
         <div className="flex items-center gap-6 text-sm font-medium">
-          <NavItem to= "/" icon={<Home size={18}/>} label="Home"/>
+          <NavItem to="/" icon={<Home size={18} />} label="Home" />
           <NavItem to="/personnel" icon={<Users size={18} />} label="Personnel" />
           <NavItem to="/skills" icon={<Brain size={18} />} label="Skills" />
           <NavItem to="/projects" icon={<Briefcase size={18} />} label="Projects" />
-          <NavItem to="/projectsskills" icon={<Layers size={18} />} label="Project Skills" />
+
+          {/* Project Skills Dropdown */}
+          <select
+            className="bg-white text-black rounded px-2 py-1"
+            value={selectedProjectId}
+            onChange={handleProjectChange}
+          >
+            <option value="">Project Skills</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
         </div>
       </nav>
     </header>
   );
 };
-
-/* ================= NAV ITEM ================= */
 
 const NavItem = ({ to, icon, label }) => (
   <NavLink

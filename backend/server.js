@@ -10,7 +10,7 @@ import skillRoutes from "./src/routes/skillRoutes.js";
 import projectRoutes from "./src/routes/projectRoutes.js";
 import matchingRoutes from "./src/routes/matchingRoutes.js";
 import personnelSkillRoutes from "./src/routes/personnelSkillRoutes.js";
-import projectskillRoutes from "./src/routes/personnelSkillRoutes.js";
+import projectSkillRoutes from "./src/routes/personnelSkillRoutes.js"; // Changed to correct import
 
 dotenv.config();
 
@@ -68,9 +68,8 @@ app.use("/api/skills", skillRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/match", matchingRoutes);
 app.use("/api/personnel-skills", personnelSkillRoutes);
-app.use("api/projects", projectskillRoutes);
-app.use("/api/matching", matchingRoutes);
-
+app.use("/api/project-skills", projectSkillRoutes); // Fixed path and added forward slash
+// app.use("/api/matching", matchingRoutes); // Duplicate - removed
 
 // Health Check Endpoint
 app.get("/api/health", (req, res) => {
@@ -131,6 +130,8 @@ app.listen(PORT, () => {
   - Skills:       /api/skills
   - Projects:     /api/projects
   - Matching:     /api/match
+  - Personnel Skills: /api/personnel-skills
+  - Project Skills:   /api/project-skills
   ============================================
   `);
 });

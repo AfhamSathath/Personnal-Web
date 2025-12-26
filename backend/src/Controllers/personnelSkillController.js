@@ -23,7 +23,12 @@ export const getPersonnelSkills = async (req, res) => {
 // POST assign skill to personnel
 export const addPersonnelSkills = async (req, res) => {
   try {
-    const { personnelId, skillId, proficiency } = req.body;
+    let { personnelId, skillId, proficiency } = req.body;
+
+    // Convert IDs to numbers
+    personnelId = Number(personnelId);
+    skillId = Number(skillId);
+
     if (!personnelId || !skillId || !proficiency) {
       return res.status(400).json({ message: "personnelId, skillId, and proficiency are required" });
     }
@@ -35,6 +40,7 @@ export const addPersonnelSkills = async (req, res) => {
     );
     if (existing.length > 0) return res.status(409).json({ message: "This personnel already has this skill" });
 
+    // Insert new skill assignment
     const [result] = await db.query(
       "INSERT INTO personnel_skills (personnel_id, skill_id, proficiency) VALUES (?, ?, ?)",
       [personnelId, skillId, proficiency]
@@ -42,11 +48,13 @@ export const addPersonnelSkills = async (req, res) => {
 
     const [newEntry] = await db.query("SELECT * FROM personnel_skills WHERE id=?", [result.insertId]);
     res.status(201).json(newEntry[0]);
+
   } catch (err) {
     console.error("POST /api/personnel-skills error:", err);
     res.status(500).json({ message: "Failed to add personnel skill" });
   }
 };
+
 
 // PUT update proficiency
 export const updatePersonnelSkills = async (req, res) => {

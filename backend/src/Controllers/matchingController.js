@@ -1,5 +1,8 @@
-import db from "../config/db.js";
+import { db } from "../db.js";
 
+/**
+ * Proficiency weight mapping
+ */
 const LEVEL_WEIGHT = {
   Beginner: 1,
   Intermediate: 2,
@@ -7,86 +10,117 @@ const LEVEL_WEIGHT = {
   Expert: 4
 };
 
+/**
+ * Match personnel to a project based on skill requirements
+ * GET /api/projects/:projectId/match
+ */
 export const matchPersonnelToProject = async (req, res) => {
   const { projectId } = req.params;
 
   try {
-    // 1️⃣ Required skills for project
-    const [projectSkills] = await db.query(`
-      SELECT ps.skill_id, ps.min_level, s.name
-      FROM project_skills ps
-      JOIN skills s ON ps.skill_id = s.id
-      WHERE ps.project_id = ?
-    `, [projectId]);
-
-    if (projectSkills.length === 0)
-      return res.json([]);
-
-    // 2️⃣ All personnel with their skills
-    const [personnelSkills] = await db.query(`
+    /* =====================================================
+       1. Fetch required skills for the project
+    ===================================================== */
+    const [projectSkills] = await db.query(
+      `
       SELECT 
+        ps.skill_id,
+        ps.min_level,
+        s.name AS skill_name
+      FROM project_skills ps
+      JOIN skills s ON s.id = ps.skill_id
+      WHERE ps.project_id = ?
+      `,
+      [projectId]
+    );
+
+    if (!projectSkills.length) {
+      return res.json([]);
+    }
+
+    /* =====================================================
+       2. Fetch all personnel with their skills
+    ===================================================== */
+    const [rows] = await db.query(
+      `
+      SELECT
         p.id AS personnel_id,
-        p.name,
+        p.name AS personnel_name,
         s.id AS skill_id,
         s.name AS skill_name,
         ps.proficiency
       FROM personnel p
-      LEFT JOIN personnel_skills ps ON p.id = ps.personnel_id
-      LEFT JOIN skills s ON ps.skill_id = s.id
-    `);
+      LEFT JOIN personnel_skills ps ON ps.personnel_id = p.id
+      LEFT JOIN skills s ON s.id = ps.skill_id
+      `
+    );
 
-    // 3️⃣ Group by personnel
+    /* =====================================================
+       3. Group skills by personnel
+    ===================================================== */
     const personnelMap = {};
-    personnelSkills.forEach(row => {
+
+    for (const row of rows) {
       if (!personnelMap[row.personnel_id]) {
         personnelMap[row.personnel_id] = {
           id: row.personnel_id,
-          name: row.name,
+          name: row.personnel_name,
           skills: []
         };
       }
+
       if (row.skill_id) {
         personnelMap[row.personnel_id].skills.push({
-          skill_id: row.skill_id,
-          name: row.skill_name,
+          skillId: row.skill_id,
+          skillName: row.skill_name,
           proficiency: row.proficiency
         });
       }
-    });
+    }
 
-    // 4️⃣ Matching logic
+    /* =====================================================
+       4. Matching logic
+    ===================================================== */
     const results = [];
 
-    Object.values(personnelMap).forEach(person => {
-      let matched = 0;
+    for (const person of Object.values(personnelMap)) {
+      let matchedSkills = 0;
 
-      projectSkills.forEach(reqSkill => {
-        const found = person.skills.find(
-          s =>
-            s.skill_id === reqSkill.skill_id &&
-            LEVEL_WEIGHT[s.proficiency] >= LEVEL_WEIGHT[reqSkill.min_level]
+      for (const requiredSkill of projectSkills) {
+        const hasSkill = person.skills.find(
+          skill =>
+            skill.skillId === requiredSkill.skill_id &&
+            LEVEL_WEIGHT[skill.proficiency] >=
+              LEVEL_WEIGHT[requiredSkill.min_level]
         );
-        if (found) matched++;
-      });
 
-      if (matched > 0) {
+        if (hasSkill) matchedSkills++;
+      }
+
+      if (matchedSkills > 0) {
         results.push({
           personnelId: person.id,
           name: person.name,
-          matchedSkills: matched,
-          totalSkills: projectSkills.length,
-          matchScore: Math.round((matched / projectSkills.length) * 100)
+          matchedSkills,
+          totalRequiredSkills: projectSkills.length,
+          matchScore: Math.round(
+            (matchedSkills / projectSkills.length) * 100
+          )
         });
       }
-    });
+    }
 
-    // 5️⃣ Best match first
+    /* =====================================================
+       5. Sort by best match
+    ===================================================== */
     results.sort((a, b) => b.matchScore - a.matchScore);
 
-    res.json(results);
+    return res.json(results);
 
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Matching failed" });
+  } catch (error) {
+    console.error("Matching Error:", error);
+    return res.status(500).json({
+      message: "Failed to match personnel to project"
+    });
   }
 };

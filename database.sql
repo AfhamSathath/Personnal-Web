@@ -1,19 +1,18 @@
 -- ===================================
--- DATABASE CREATION
+-- DATABASE
 -- ===================================
-
-CREATE DATABASE skillmatch ;
+CREATE DATABASE  skillmatch;
 USE skillmatch;
 
 -- ===================================
 -- PERSONNEL TABLE
 -- ===================================
 CREATE TABLE personnel (
-  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   email VARCHAR(255) NOT NULL UNIQUE,
-  role VARCHAR(255) DEFAULT NULL,
-  experience ENUM('Junior','Mid-Level','Senior') DEFAULT NULL,
+  role VARCHAR(255),
+  experience ENUM('Junior','Mid-Level','Senior') DEFAULT 'Junior',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -21,48 +20,59 @@ CREATE TABLE personnel (
 -- SKILLS TABLE
 -- ===================================
 CREATE TABLE skills (
-  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL UNIQUE,
   category VARCHAR(255) NOT NULL,
-  description TEXT DEFAULT NULL
+  description TEXT
 );
 
 -- ===================================
--- PERSONNEL_SKILLS TABLE
+-- PERSONNEL ↔ SKILLS (WITH PROFICIENCY)
 -- ===================================
 CREATE TABLE personnel_skills (
-  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  id INT AUTO_INCREMENT PRIMARY KEY,
   personnel_id INT NOT NULL,
   skill_id INT NOT NULL,
-  proficiency ENUM('Beginner','Intermediate','Advanced','Expert') NOT NULL DEFAULT 'Beginner',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY unique_personnel_skill (personnel_id, skill_id),
-  FOREIGN KEY (personnel_id) REFERENCES personnel(id) ON DELETE CASCADE ON UPDATE CASCADE,
-  FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE ON UPDATE CASCADE
+  proficiency ENUM('Beginner','Intermediate','Advanced','Expert') 
+              NOT NULL DEFAULT 'Beginner',
+  assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  UNIQUE (personnel_id, skill_id),
+
+  FOREIGN KEY (personnel_id) REFERENCES personnel(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (skill_id) REFERENCES skills(id)
+    ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- ===================================
 -- PROJECTS TABLE
 -- ===================================
 CREATE TABLE projects (
-  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
-  description TEXT DEFAULT NULL,
-  start_date DATE DEFAULT NULL,
-  end_date DATE DEFAULT NULL,
+  description TEXT,
+  start_date DATE,
+  end_date DATE,
   status ENUM('Planning','Active','Completed') DEFAULT 'Planning',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ===================================
--- PROJECT_SKILLS TABLE
+-- PROJECT ↔ REQUIRED SKILLS
+-- (Used in Project Page)
 -- ===================================
 CREATE TABLE project_skills (
-  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  id INT AUTO_INCREMENT PRIMARY KEY,
   project_id INT NOT NULL,
   skill_id INT NOT NULL,
-  min_level ENUM('Beginner','Intermediate','Advanced','Expert') DEFAULT 'Beginner',
-  UNIQUE KEY unique_project_skill (project_id, skill_id),
-  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE ON UPDATE CASCADE,
-  FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE ON UPDATE CASCADE
+  min_level ENUM('Beginner','Intermediate','Advanced','Expert')
+            NOT NULL DEFAULT 'Beginner',
+
+  UNIQUE (project_id, skill_id),
+
+  FOREIGN KEY (project_id) REFERENCES projects(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (skill_id) REFERENCES skills(id)
+    ON DELETE CASCADE ON UPDATE CASCADE
 );

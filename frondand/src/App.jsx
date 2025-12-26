@@ -18,7 +18,7 @@ export default function App() {
         <Route path="/skills" element={<SkillsPage />} />
         <Route path="/match" element={<MatchPage />} />
         <Route path="/projects" element={<ProjectPage/>}/>
-        <Route path="/projectskills" element={<ProjectSkillPage/>}/>
+        <Route path="/project-skills/:projectId" element={<ProjectSkillPage />} />
       </Routes>
     </BrowserRouter>
   );

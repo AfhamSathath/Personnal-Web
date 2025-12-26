@@ -17,6 +17,11 @@ export default function SkillsPage() {
   const [form,setForm] = useState({name:"",category:"",description:""});
   const [assignForm,setAssignForm] = useState({personnelId:"",skillId:"",proficiency:"Beginner"});
 
+  // 🔹 Filters & live search
+  const [searchName, setSearchName] = useState("");
+  const [searchSkill, setSearchSkill] = useState("");
+  const [filterLevel, setFilterLevel] = useState("");
+
   const fetchSkills = useCallback(async()=>{
     try{const res=await axios.get(API_SKILLS); setSkills(res.data);} 
     catch(err){console.error("Failed to fetch skills:",err);}
@@ -56,54 +61,97 @@ export default function SkillsPage() {
     } catch(err){console.error(err); alert(err.response?.data?.message||"Assign failed");}
   };
 
+  // 🔹 Filtered personnel (live search + proficiency)
+  const filteredPersonnel = personnel.filter(p => {
+    const nameMatch = p.name.toLowerCase().includes(searchName.toLowerCase());
+    const skillMatch = searchSkill ? (p.skills||[]).some(s => s.name.toLowerCase().includes(searchSkill.toLowerCase())) : true;
+    const levelMatch = filterLevel ? (p.skills||[]).some(s => s.proficiency === filterLevel) : true;
+    return nameMatch && skillMatch && levelMatch;
+  });
+
   return(
-    <div className="p-6 max-w-6xl mx-auto space-y-8">
+    <div className="p-6 max-w-7xl mx-auto space-y-10">
+      {/* 🔹 Skill Catalog */}
       <Card title="Skill Catalog">
         <form onSubmit={handleSubmit} className="grid md:grid-cols-3 gap-4 mb-6">
-          <input list="skill-options" className="border p-2 rounded w-full" placeholder="Skill Name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} required/>
+          <input list="skill-options" className="border p-3 rounded-lg w-full shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none" placeholder="Skill Name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} required/>
           <datalist id="skill-options">{COMMON_SKILLS.map(s=><option key={s} value={s}/>)}</datalist>
-          <select className="border p-2 rounded w-full" value={form.category} onChange={e=>setForm({...form,category:e.target.value})} required>
+          <select className="border p-3 rounded-lg w-full shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none" value={form.category} onChange={e=>setForm({...form,category:e.target.value})} required>
             <option value="">Select Category</option>{SKILL_CATEGORIES.map(c=><option key={c} value={c}>{c}</option>)}
           </select>
-          <input className="border p-2 rounded w-full" placeholder="Description" value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/>
-          <div className="md:col-span-3 flex gap-2">
-            <button className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700">{editingId?"Update Skill":"Add Skill"}</button>
-            {editingId && <button type="button" onClick={resetSkillForm} className="bg-gray-500 text-white px-4 rounded hover:bg-gray-600">Cancel</button>}
+          <input className="border p-3 rounded-lg w-full shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none" placeholder="Description" value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/>
+          <div className="md:col-span-3 flex gap-3 mt-2">
+            <button className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-2 rounded-lg shadow hover:from-blue-600 hover:to-blue-700 transition"> {editingId?"Update Skill":"Add Skill"} </button>
+            {editingId && <button type="button" onClick={resetSkillForm} className="bg-gray-400 text-white px-4 rounded-lg shadow hover:bg-gray-500 transition">Cancel</button>}
           </div>
         </form>
-        <ul className="space-y-2">{skills.map(s=>(
-          <li key={s.id} className="p-4 bg-gray-50 border rounded-lg flex justify-between">
-            <div><p className="font-semibold">{s.name}</p><p className="text-sm text-gray-600">{s.category}</p>{s.description && <p className="text-sm text-gray-500">{s.description}</p>}</div>
-            <div className="flex gap-3"><button onClick={()=>handleEdit(s)} className="text-blue-600 text-sm">Edit</button><button onClick={()=>handleDelete(s.id)} className="text-red-600 text-sm">Delete</button></div>
-          </li>))}
+        <ul className="grid md:grid-cols-2 gap-4">
+          {skills.map(s=>(
+            <li key={s.id} className="p-4 bg-white border rounded-xl shadow hover:shadow-lg transition flex justify-between items-start">
+              <div>
+                <p className="font-semibold text-lg">{s.name}</p>
+                <p className="text-sm text-gray-500">{s.category}</p>
+                {s.description && <p className="text-sm text-gray-400 mt-1">{s.description}</p>}
+              </div>
+              <div className="flex gap-3 mt-1">
+                <button onClick={()=>handleEdit(s)} className="text-blue-600 text-sm font-medium hover:underline">Edit</button>
+                <button onClick={()=>handleDelete(s.id)} className="text-red-600 text-sm font-medium hover:underline">Delete</button>
+              </div>
+            </li>
+          ))}
         </ul>
       </Card>
 
+      {/* 🔹 Assign Skills */}
       <Card title="Assign Skill to Personnel">
         <form onSubmit={handleAssign} className="grid md:grid-cols-4 gap-4">
-          <select className="border p-2 rounded" value={assignForm.personnelId} onChange={e=>setAssignForm({...assignForm,personnelId:e.target.value})}>
+          <select className="border p-3 rounded-lg shadow focus:ring-2 focus:ring-green-400" value={assignForm.personnelId} onChange={e=>setAssignForm({...assignForm,personnelId:e.target.value})}>
             <option value="">Select Personnel</option>{personnel.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
-          <select className="border p-2 rounded" value={assignForm.skillId} onChange={e=>setAssignForm({...assignForm,skillId:e.target.value})}>
+          <select className="border p-3 rounded-lg shadow focus:ring-2 focus:ring-green-400" value={assignForm.skillId} onChange={e=>setAssignForm({...assignForm,skillId:e.target.value})}>
             <option value="">Select Skill</option>{skills.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
-          <select className="border p-2 rounded" value={assignForm.proficiency} onChange={e=>setAssignForm({...assignForm,proficiency:e.target.value})}>
+          <select className="border p-3 rounded-lg shadow focus:ring-2 focus:ring-green-400" value={assignForm.proficiency} onChange={e=>setAssignForm({...assignForm,proficiency:e.target.value})}>
             {PROFICIENCY_LEVELS.map(lvl=><option key={lvl} value={lvl}>{lvl}</option>)}
           </select>
-          <button className="bg-green-600 text-white rounded hover:bg-green-700">Assign</button>
+          <button className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg shadow hover:from-green-600 hover:to-green-700 transition">Assign</button>
         </form>
       </Card>
 
+      {/* 🔹 Personnel & Skills */}
       <Card title="Personnel & Assigned Skills">
-        <ul className="space-y-3">{personnel.length===0?<li className="text-gray-500">No personnel found.</li>:personnel.map(p=>(
-          <li key={p.id} className="border p-3 rounded">
-            <p className="font-semibold">{p.name}</p>
-            <p className="text-sm text-gray-600">{p.role||"—"} — {p.experience||"—"}</p>
-            <div className="mt-2 flex flex-wrap gap-2">{(p.skills||[]).map(s=>(
-              <span key={s.id} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">{s.name} ({s.proficiency})</span>
-            ))}</div>
-          </li>
-        ))}</ul>
+        {/* Filters */}
+        <div className="mb-6 flex flex-wrap gap-4 items-center">
+          <input type="text" placeholder="Search personnel..." value={searchName} onChange={e=>setSearchName(e.target.value)} className="p-2 border rounded-lg shadow w-64 focus:ring-2 focus:ring-blue-400"/>
+          <input type="text" placeholder="Search skill..." value={searchSkill} onChange={e=>setSearchSkill(e.target.value)} className="p-2 border rounded-lg shadow w-64 focus:ring-2 focus:ring-green-400"/>
+          <select value={filterLevel} onChange={e=>setFilterLevel(e.target.value)} className="p-2 border rounded-lg shadow">
+            <option value="">All Levels</option>
+            {PROFICIENCY_LEVELS.map(lvl => <option key={lvl} value={lvl}>{lvl}</option>)}
+          </select>
+          <button type="button" onClick={()=>{setSearchName(""); setSearchSkill(""); setFilterLevel("");}} className="bg-gray-400 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-500 transition">Clear Filters</button>
+        </div>
+
+        <ul className="grid md:grid-cols-2 gap-4">
+          {filteredPersonnel.length===0 ? (
+            <li className="text-gray-500 text-center col-span-2">No personnel found.</li>
+          ) : filteredPersonnel.map(p=>(
+            <li key={p.id} className="border p-4 rounded-xl shadow hover:shadow-lg transition bg-white">
+              <p className="font-semibold text-lg">{p.name}</p>
+              <p className="text-sm text-gray-600">{p.role||"—"} — {p.experience||"—"}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {(p.skills||[]).map(s=>(
+                  <span key={s.id} className={`px-2 py-1 rounded-full text-xs font-medium
+                    ${s.proficiency==="Beginner"?"bg-blue-100 text-blue-800":
+                      s.proficiency==="Intermediate"?"bg-yellow-100 text-yellow-800":
+                      s.proficiency==="Advanced"?"bg-purple-100 text-purple-800":
+                      "bg-green-100 text-green-800"}`}>
+                    {s.name} ({s.proficiency})
+                  </span>
+                ))}
+              </div>
+            </li>
+          ))}
+        </ul>
       </Card>
     </div>
   );

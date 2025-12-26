@@ -7,9 +7,10 @@ import rateLimit from "express-rate-limit";
 
 import personnelRoutes from "./src/routes/personnelRoutes.js";
 import skillRoutes from "./src/routes/skillRoutes.js";
-
+import projectRoutes from "./src/routes/projectRoutes.js";
 import matchingRoutes from "./src/routes/matchingRoutes.js";
 import personnelSkillRoutes from "./src/routes/personnelSkillRoutes.js";
+import projectskillRoutes from "./src/routes/personnelSkillRoutes.js";
 
 dotenv.config();
 
@@ -64,9 +65,12 @@ app.use((req, res, next) => {
 // Routes
 app.use("/api/personnel", personnelRoutes);
 app.use("/api/skills", skillRoutes);
-
+app.use("/api/projects", projectRoutes);
 app.use("/api/match", matchingRoutes);
 app.use("/api/personnel-skills", personnelSkillRoutes);
+app.use("api/projects", projectskillRoutes);
+app.use("/api/matching", matchingRoutes);
+
 
 // Health Check Endpoint
 app.get("/api/health", (req, res) => {

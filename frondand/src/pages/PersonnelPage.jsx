@@ -8,6 +8,7 @@ const API_URL = "http://localhost:5000/api/personnel";
 const PersonnelPage = () => {
     const [personnel, setPersonnel] = useState([]);
     const [editingId, setEditingId] = useState(null);
+    const [filterRole, setFilterRole] = useState(""); // 🔹 Filter state
 
     const [formData, setFormData] = useState({
         name: "",
@@ -16,7 +17,6 @@ const PersonnelPage = () => {
         experience: "Junior",
     });
 
-    // 🔹 Fetch personnel
     const fetchPersonnel = async () => {
         try {
             const res = await axios.get(API_URL);
@@ -31,15 +31,12 @@ const PersonnelPage = () => {
         fetchPersonnel();
     }, []);
 
-    // 🔹 Handle input
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    // 🔹 Submit (Add / Update)
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         try {
             if (editingId) {
                 await axios.put(`${API_URL}/${editingId}`, formData);
@@ -48,7 +45,6 @@ const PersonnelPage = () => {
                 await axios.post(API_URL, formData);
                 toast.success("Personnel added successfully!");
             }
-
             resetForm();
             fetchPersonnel();
         } catch (err) {
@@ -61,7 +57,6 @@ const PersonnelPage = () => {
         }
     };
 
-    // 🔹 Edit
     const handleEdit = (p) => {
         setEditingId(p.id);
         setFormData({
@@ -72,7 +67,6 @@ const PersonnelPage = () => {
         });
     };
 
-    // 🔹 Cancel edit
     const resetForm = () => {
         setEditingId(null);
         setFormData({
@@ -83,16 +77,13 @@ const PersonnelPage = () => {
         });
     };
 
-    // 🔹 Delete
     const handleDelete = async (id) => {
         if (!window.confirm("Are you sure you want to delete this personnel?")) return;
 
         try {
             await axios.delete(`${API_URL}/${id}`);
             toast.success("Personnel deleted successfully!");
-
             if (editingId === id) resetForm();
-
             fetchPersonnel();
         } catch (err) {
             console.error(err);
@@ -100,10 +91,14 @@ const PersonnelPage = () => {
         }
     };
 
+    // 🔹 Filtered personnel
+    const filteredPersonnel = filterRole
+        ? personnel.filter((p) => p.role === filterRole)
+        : personnel;
+
     return (
         <div className="p-6 max-w-3xl mx-auto">
             <ToastContainer position="top-right" autoClose={3000} />
-
             <h1 className="text-3xl font-bold mb-6">Personnel Management</h1>
 
             {/* 🔹 FORM */}
@@ -181,12 +176,30 @@ const PersonnelPage = () => {
                 </div>
             </form>
 
+            {/* 🔹 ROLE FILTER */}
+            <div className="mb-4">
+                <label className="mr-2 font-semibold">Filter by Role:</label>
+                <select
+                    value={filterRole}
+                    onChange={(e) => setFilterRole(e.target.value)}
+                    className="p-2 border rounded"
+                >
+                    <option value="">All Roles</option>
+                    <option value="Frontend Developer">Frontend Developer</option>
+                    <option value="Backend Developer">Backend Developer</option>
+                    <option value="Fullstack Developer">Fullstack Developer</option>
+                    <option value="Designer">Designer</option>
+                    <option value="Project Manager">Project Manager</option>
+                    <option value="QA Engineer">QA Engineer</option>
+                </select>
+            </div>
+
             {/* 🔹 LIST */}
             <ul className="space-y-3">
-                {personnel.length === 0 ? (
+                {filteredPersonnel.length === 0 ? (
                     <li className="text-gray-500">No personnel found.</li>
                 ) : (
-                    personnel.map((p) => (
+                    filteredPersonnel.map((p) => (
                         <li
                             key={p.id}
                             className={`border p-3 rounded flex justify-between items-center

@@ -1,6 +1,8 @@
-// matchingRoutes.js
 import express from "express";
-import { matchPersonnel } from "../Controllers/matchingController.js";
+import { matchPersonnelToProject } from "../controllers/matchingController.js";
+
 const router = express.Router();
-router.get("/:projectId", matchPersonnel);
+
+router.get("/project/:projectId", matchPersonnelToProject);
+
 export default router;

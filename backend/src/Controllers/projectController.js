@@ -1,46 +1,63 @@
-import { getAllPersonnel, createPersonnel, updatePersonnel, deletePersonnel } from "../models/personnelModel.js";
+// src/controllers/projectController.js
+import { projectModel } from "../models/projectModel.js";
 
-export const getPersonnel = async (req, res) => {
+// --- GET ALL PROJECTS ---
+export const getAllProjects = async (req, res) => {
   try {
-    const personnel = await getAllPersonnel();
-    res.json(personnel);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to fetch personnel" });
+    const projects = await projectModel.getAll();
+    res.json(projects);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching projects" });
   }
 };
 
-export const addPersonnel = async (req, res) => {
+// --- GET PROJECT BY ID ---
+export const getProjectById = async (req, res) => {
   try {
-    const { name, email, role, experience } = req.body;
-    if (!name || !email) return res.status(400).json({ message: "Name and email required" });
+    const project = await projectModel.getById(req.params.id);
+    if (!project) return res.status(404).json({ message: "Project not found" });
 
-    const newPersonnel = await createPersonnel({ name, email, role, experience });
-    res.status(201).json(newPersonnel);
-  } catch (err) {
-    console.error(err);
-    if (err.code === "ER_DUP_ENTRY") res.status(409).json({ message: "Email already exists" });
-    else res.status(500).json({ message: "Failed to add personnel" });
+    const skills = await projectModel.getSkills(project.id);
+    res.json({ ...project, skills });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching project" });
   }
 };
 
-export const editPersonnel = async (req, res) => {
+// --- CREATE PROJECT ---
+export const createProject = async (req, res) => {
   try {
-    const updated = await updatePersonnel(req.params.id, req.body);
-    res.json(updated);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to update personnel" });
+    const { name, description, start_date, end_date, status, skills } = req.body;
+    const projectId = await projectModel.create({ name, description, start_date, end_date, status, skills });
+    res.status(201).json({ message: "Project created", projectId });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error creating project" });
   }
 };
 
-export const removePersonnel = async (req, res) => {
+// --- UPDATE PROJECT ---
+export const updateProject = async (req, res) => {
   try {
-    const deleted = await deletePersonnel(req.params.id);
-    if (!deleted) return res.status(404).json({ message: "Personnel not found" });
-    res.json({ message: "Personnel deleted successfully" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to delete personnel" });
+    const id = req.params.id;
+    const { name, description, start_date, end_date, status, skills } = req.body;
+    await projectModel.update(id, { name, description, start_date, end_date, status, skills });
+    res.json({ message: "Project updated", projectId: id });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error updating project" });
+  }
+};
+
+// --- DELETE PROJECT ---
+export const deleteProject = async (req, res) => {
+  try {
+    await projectModel.delete(req.params.id);
+    res.json({ message: "Project deleted" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error deleting project" });
   }
 };

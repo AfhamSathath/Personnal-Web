@@ -7,7 +7,7 @@ export const getAll = async () => {
 
 export const getById = async (id) => {
   const [rows] = await pool.query("SELECT * FROM personnel WHERE id = ?", [id]);
-  return rows[0]; // Return single object or undefined
+  return rows[0]; 
 };
 
 export const create = async ({ name, email, role, experience }) => {
@@ -19,7 +19,6 @@ export const create = async ({ name, email, role, experience }) => {
 };
 
 export const update = async (id, { name, email, role, experience }) => {
-  // Build dynamic query based on provided fields
   const fields = [];
   const values = [];
   
@@ -47,7 +46,7 @@ export const update = async (id, { name, email, role, experience }) => {
     throw new Error("No fields to update");
   }
   
-  // Add id to values array
+  
   values.push(id);
   
   const query = `UPDATE personnel SET ${fields.join(", ")} WHERE id = ?`;
@@ -65,5 +64,5 @@ export const personnelModel = {
   getById, 
   create, 
   update, 
-  delete: deleteById 
-};
+  delete:deleteById 
+}; 

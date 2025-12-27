@@ -1,10 +1,9 @@
-// backend/src/controllers/projectController.js
 import { projectModel } from "../models/projectModel.js";
-import { db } from "../db.js"; // Assuming you have a db connection
+import { db } from "../db.js"; 
 
-// ================================
+
 // GET ALL PROJECTS
-// ================================
+
 export const getAllProjects = async (req, res) => {
   try {
     const projects = await projectModel.getAll();
@@ -15,9 +14,9 @@ export const getAllProjects = async (req, res) => {
   }
 };
 
-// ================================
+
 // GET PROJECT BY ID
-// ================================
+
 export const getProjectById = async (req, res) => {
   try {
     const project = await projectModel.getById(req.params.id);
@@ -41,9 +40,8 @@ export const getProjectById = async (req, res) => {
   }
 };
 
-// ================================
+
 // CREATE PROJECT
-// ================================
 export const createProject = async (req, res) => {
   try {
     const { name, description, start_date, end_date, status, skills } = req.body;
@@ -68,9 +66,9 @@ export const createProject = async (req, res) => {
   }
 };
 
-// ================================
+
 // UPDATE PROJECT
-// ================================
+
 export const updateProject = async (req, res) => {
   try {
     const id = req.params.id;
@@ -97,9 +95,9 @@ export const updateProject = async (req, res) => {
   }
 };
 
-// ================================
+
 // DELETE PROJECT
-// ================================
+
 export const deleteProject = async (req, res) => {
   try {
     const id = req.params.id;
@@ -111,14 +109,14 @@ export const deleteProject = async (req, res) => {
   }
 };
 
-// ================================
+
 // MATCH & DEPLOY TEAM
-// ================================
+
 export const matchTeamForProject = async (req, res) => {
   const { id: projectId } = req.params;
 
   try {
-    // 1️⃣ Get required skills for the project
+    // Get required skills for the project
     const [projectSkills] = await db.query(
       `SELECT ps.skill_id, ps.min_level, s.name AS skill_name
        FROM project_skills ps
@@ -131,7 +129,7 @@ export const matchTeamForProject = async (req, res) => {
       return res.status(400).json({ message: "Project has no skills defined." });
     }
 
-    // 2️⃣ Get all personnel with their skills
+    //  Get all personnel with their skills
     const [personnelSkills] = await db.query(
       `SELECT p.id AS personnel_id, p.name AS personnel_name,
               s.id AS skill_id, s.name AS skill_name, ps.proficiency
@@ -140,7 +138,7 @@ export const matchTeamForProject = async (req, res) => {
        JOIN skills s ON ps.skill_id = s.id`
     );
 
-    // 3️⃣ Matching algorithm
+    // Matching algorithm
     const levels = { Beginner: 1, Intermediate: 2, Advanced: 3, Expert: 4 };
     const personnelMap = {};
 
@@ -159,7 +157,7 @@ export const matchTeamForProject = async (req, res) => {
       }
     });
 
-    // 4️⃣ Sort personnel by score descending
+    // Sort personnel by score descending
     const matchedPersonnel = Object.values(personnelMap)
       .filter(p => p.score > 0)
       .sort((a, b) => b.score - a.score);

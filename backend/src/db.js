@@ -15,9 +15,9 @@ const poolConfig = {
   queueLimit: 0,
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,
-  timezone: '+00:00', // Use UTC
-  charset: 'utf8mb4', // Support emojis and special characters
-  multipleStatements: false // Security: prevent SQL injection via multiple statements
+  timezone: '+00:00',
+  charset: 'utf8mb4', 
+  multipleStatements: false // Prevent SQL injection via multiple statements
 };
 
 // Create connection pool

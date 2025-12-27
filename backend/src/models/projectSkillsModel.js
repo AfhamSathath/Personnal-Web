@@ -1,4 +1,3 @@
-// src/models/projectSkillsModel.js
 import pool from "../db.js";
 
 // --- GET ALL SKILLS FOR A PROJECT ---

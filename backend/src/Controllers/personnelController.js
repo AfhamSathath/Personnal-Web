@@ -92,8 +92,7 @@ export const updatePersonnel = async (req, res) => {
       return res.status(400).json({ error: "At least one field to update is required" });
     }
     
-    // You need to create an update method in your model
-    // For now, let's assume you have one
+     
     const result = await personnelModel.update(id, { name, email, role, experience });
     
     res.json({ 
@@ -121,8 +120,7 @@ export const deletePersonnel = async (req, res) => {
       return res.status(400).json({ error: "Valid ID is required" });
     }
     
-    // You need to create a delete method in your model
-    // For now, let's assume you have one
+    
     const result = await personnelModel.delete(id);
     
     if (result.affectedRows === 0) {
@@ -148,7 +146,7 @@ export const getPersonnelById = async (req, res) => {
       return res.status(400).json({ error: "Valid ID is required" });
     }
     
-    // You need to create a getById method in your model
+    
     const personnel = await personnelModel.getById(id);
     
     if (!personnel) {

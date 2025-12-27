@@ -1,4 +1,3 @@
-// backend/src/models/projectModel.js
 import { db } from "../db.js";
 
 export const projectModel = {

@@ -1,8 +1,7 @@
-// src/models/personnelSkillModel.js
 import { pool } from "../db.js";
 
 export const PersonnelSkillModel = {
-  // ================= ASSIGN SKILL =================
+  //  ASSIGN SKILL 
   async assign({ personnelId, skillId, proficiency }) {
     // Convert IDs to numbers to avoid DB issues
     const pid = Number(personnelId);
@@ -32,7 +31,7 @@ export const PersonnelSkillModel = {
     };
   },
 
-  // ================= GET SKILLS BY PERSONNEL =================
+  //  GET SKILLS BY PERSONNEL 
   async getSkillsByPersonnel(personnelId) {
     const pid = Number(personnelId);
     const [rows] = await pool.query(
@@ -45,7 +44,7 @@ export const PersonnelSkillModel = {
     return rows;
   },
 
-  // ================= GET PERSONNEL BY SKILL =================
+  // GET PERSONNEL BY SKILL 
   async getPersonnelBySkill(skillId) {
     const sid = Number(skillId);
     const [rows] = await pool.query(
@@ -58,7 +57,7 @@ export const PersonnelSkillModel = {
     return rows;
   },
 
-  // ================= OPTIONAL: DELETE ASSIGNMENT =================
+  // DELETE ASSIGNMENT 
   async removeAssignment({ personnelId, skillId }) {
     const pid = Number(personnelId);
     const sid = Number(skillId);

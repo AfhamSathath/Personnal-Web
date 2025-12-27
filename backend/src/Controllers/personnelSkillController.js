@@ -1,4 +1,3 @@
-// backend/src/Controllers/personnelSkillController.js
 import { db } from "../db.js";
 
 

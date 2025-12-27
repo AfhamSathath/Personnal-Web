@@ -11,7 +11,7 @@ export const matchPersonnelToProject = async (req, res) => {
   const { projectId } = req.params;
 
   try {
-    // 1️⃣ Project required skills
+    //  Project required skills
     const [projectSkills] = await db.query(`
       SELECT ps.skill_id, s.name AS skill_name, ps.min_level
       FROM project_skills ps
@@ -23,7 +23,7 @@ export const matchPersonnelToProject = async (req, res) => {
       return res.status(404).json({ message: "No skills defined for this project" });
     }
 
-    // 2️⃣ Personnel skills
+    //  Personnel skills
     const [personnelSkills] = await db.query(`
       SELECT p.id, p.name AS personnel_name,
              s.id AS skill_id, s.name AS skill_name,
@@ -33,7 +33,7 @@ export const matchPersonnelToProject = async (req, res) => {
       JOIN skills s ON ps.skill_id = s.id
     `);
 
-    // 3️⃣ Matching logic
+    //  Matching logic
     const personnelMap = {};
 
     personnelSkills.forEach(row => {

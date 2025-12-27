@@ -38,23 +38,32 @@ export const addSkill = async (req, res) => {
 
 // PUT update skill
 export const updateSkill = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, category, description } = req.body;
-    if (!name || !category) return res.status(400).json({ message: "Name and category required" });
+  const { id } = req.params;
+  const { name, category, description } = req.body;
 
+  try {
     const [result] = await db.query(
-      "UPDATE skills SET name=?, category=?, description=? WHERE id=?",
-      [name, category, description || null, id]
+      `UPDATE skills 
+       SET name = ?, category = ?, description = ?
+       WHERE id = ?`,
+      [name, category, description, id]
     );
 
-    if (result.affectedRows === 0) return res.status(404).json({ message: "Skill not found" });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Skill not found" });
+    }
 
-    const [updatedSkill] = await db.query("SELECT * FROM skills WHERE id = ?", [id]);
-    res.json(updatedSkill[0]);
-  } catch (err) {
-    console.error("PUT /api/skills/:id error:", err);
-    res.status(500).json({ message: "Failed to update skill" });
+    res.json({
+      message: "Skill updated successfully",
+      skill: {
+        id,
+        name,
+        category,
+        description
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating skill", error });
   }
 };
 

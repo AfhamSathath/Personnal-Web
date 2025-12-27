@@ -1,9 +1,9 @@
 import express from "express";
-import { matchPersonnelToProject } from "../Controllers/matchingController.js";
+import { matchPersonnelToProject } from "../controllers/matchingController.js";
 
 const router = express.Router();
 
-// GET matched personnel for a project
-router.get("/projects/:projectId/matched-personnel", matchPersonnelToProject);
+// Match personnel to a project
+router.get("/:projectId", matchPersonnelToProject);
 
 export default router;

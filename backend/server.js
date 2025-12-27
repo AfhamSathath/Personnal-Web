@@ -68,8 +68,8 @@ app.use("/api/skills", skillRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/match", matchingRoutes);
 app.use("/api/personnel-skills", personnelSkillRoutes);
-app.use("/api/project-skills", projectSkillRoutes); // Fixed path and added forward slash
-// app.use("/api/matching", matchingRoutes); // Duplicate - removed
+app.use("/api/project-skills", projectSkillRoutes); 
+app.use("/api/matching", matchingRoutes); 
 
 // Health Check Endpoint
 app.get("/api/health", (req, res) => {

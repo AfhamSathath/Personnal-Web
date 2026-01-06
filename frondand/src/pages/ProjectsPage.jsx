@@ -2,12 +2,13 @@ import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
 const API_PROJECTS = "http://localhost:5000/api/projects";
 const API_SKILLS = "http://localhost:5000/api/skills";
 
 const ProjectPage = () => {
+  // ---------------- STATES ----------------
   const [projects, setProjects] = useState([]);
   const [skillsList, setSkillsList] = useState([]);
   const [formData, setFormData] = useState({
@@ -27,7 +28,7 @@ const ProjectPage = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Fetch projects
+  // ---------------- FETCH DATA ----------------
   const fetchProjects = async () => {
     try {
       const res = await axios.get(API_PROJECTS);
@@ -38,7 +39,6 @@ const ProjectPage = () => {
     }
   };
 
-  // Fetch skills
   const fetchSkills = async () => {
     try {
       const res = await axios.get(API_SKILLS);
@@ -54,28 +54,38 @@ const ProjectPage = () => {
     fetchSkills();
   }, []);
 
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-
-  const handleSkillChange = (index, field, value) => {
-    const newSkills = [...formData.skills];
-    newSkills[index][field] = value;
-    setFormData({ ...formData, skills: newSkills });
-  };
+  // ---------------- FORM HANDLERS ----------------
+  const handleChange = (e) =>
+    setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const addSkill = () => {
-    setFormData({ ...formData, skills: [...formData.skills, { skill_id: "", min_level: "Beginner" }] });
+    setFormData({
+      ...formData,
+      skills: [
+        ...formData.skills,
+        { id: crypto.randomUUID(), skill_id: "", min_level: "Beginner" }
+      ]
+    });
   };
 
   const removeSkill = (index) => {
-    const newSkills = formData.skills.filter((_, i) => i !== index);
-    setFormData({ ...formData, skills: newSkills });
+    setFormData({
+      ...formData,
+      skills: formData.skills.filter((_, i) => i !== index)
+    });
+  };
+
+  const handleSkillChange = (index, field, value) => {
+    const updated = [...formData.skills];
+    updated[index][field] = value;
+    setFormData({ ...formData, skills: updated });
   };
 
   const handleDragEnd = (result) => {
     if (!result.destination) return;
-    const items = Array.from(formData.skills);
-    const [reordered] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reordered);
+    const items = [...formData.skills];
+    const [moved] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, moved);
     setFormData({ ...formData, skills: items });
   };
 
@@ -84,33 +94,51 @@ const ProjectPage = () => {
     try {
       if (editingId) {
         const res = await axios.put(`${API_PROJECTS}/${editingId}`, formData);
+        setProjects((prev) =>
+          prev.map((p) => (p.id === editingId ? res.data.project : p))
+        );
         toast.success("Project updated");
-        setProjects(prev => prev.map(p => p.id === editingId ? res.data.project : p));
       } else {
         const res = await axios.post(API_PROJECTS, formData);
+        setProjects((prev) => [...prev, res.data.project]);
         toast.success("Project created");
-        setProjects(prev => [...prev, res.data.project]);
       }
-      setFormData({ name: "", description: "", start_date: "", end_date: "", status: "Planning", skills: [] });
-      setEditingId(null);
-      setIsModalOpen(false);
+      resetForm();
     } catch (err) {
       console.error(err);
       toast.error("Failed to save project");
     }
   };
 
+  const resetForm = () => {
+    setIsModalOpen(false);
+    setEditingId(null);
+    setFormData({
+      name: "",
+      description: "",
+      start_date: "",
+      end_date: "",
+      status: "Planning",
+      skills: []
+    });
+  };
+
+  // ---------------- EDIT / DELETE ----------------
   const openEditModal = (project) => {
-    if (!window.confirm(`Do you want to edit the project "${project.name}"?`)) return;
+    setEditingId(project.id);
     setFormData({
       name: project.name,
       description: project.description,
       start_date: project.start_date?.split("T")[0] || "",
       end_date: project.end_date?.split("T")[0] || "",
       status: project.status,
-      skills: project.skills?.map(s => ({ skill_id: s.skill_id, min_level: s.min_level })) || []
+      skills:
+        project.skills?.map((s) => ({
+          id: crypto.randomUUID(),
+          skill_id: s.skill_id,
+          min_level: s.min_level
+        })) || []
     });
-    setEditingId(project.id);
     setIsModalOpen(true);
   };
 
@@ -118,32 +146,40 @@ const ProjectPage = () => {
     if (!window.confirm("Are you sure you want to delete this project?")) return;
     try {
       await axios.delete(`${API_PROJECTS}/${id}`);
+      setProjects((prev) => prev.filter((p) => p.id !== id));
       toast.success("Project deleted");
-      setProjects(prev => prev.filter(p => p.id !== id));
     } catch (err) {
       console.error(err);
       toast.error("Failed to delete project");
     }
   };
 
+  // ---------------- FILTER / SORT ----------------
   const filteredProjects = useMemo(() => {
     let data = projects
-      .filter(p => !filterStatus || p.status === filterStatus)
-      .filter(p => !filterSkill || p.skills?.some(s => s.skill_id.toString() === filterSkill))
-      .filter(p => {
+      .filter((p) => !filterStatus || p.status === filterStatus)
+      .filter(
+        (p) =>
+          !filterSkill ||
+          p.skills?.some((s) => s.skill_id.toString() === filterSkill)
+      )
+      .filter((p) => {
         if (!searchText) return true;
-        return p.name.toLowerCase().startsWith(searchText.toLowerCase().slice(0, 3));
+        return p.name
+          .toLowerCase()
+          .startsWith(searchText.toLowerCase().slice(0, 3));
       });
 
     if (sortConfig.key) {
       data.sort((a, b) => {
         let aVal = a[sortConfig.key] || "";
         let bVal = b[sortConfig.key] || "";
-        if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
-        if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
-        return 0;
+        return sortConfig.direction === "asc"
+          ? aVal.toString().localeCompare(bVal.toString())
+          : bVal.toString().localeCompare(aVal.toString());
       });
     }
+
     return data;
   }, [projects, filterStatus, filterSkill, searchText, sortConfig]);
 
@@ -153,44 +189,50 @@ const ProjectPage = () => {
     setSortConfig({ key, direction });
   };
 
-  const getSortIndicator = (key) => {
-    if (sortConfig.key !== key) return "";
-    return sortConfig.direction === "asc" ? " ▲" : " ▼";
-  };
-
+  // ---------------- RENDER ----------------
   return (
     <div className="container mx-auto p-6">
       <ToastContainer />
-
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Project Management</h1>
+      <div className="flex justify-between mb-6">
+        <h1 className="text-3xl font-bold">Project Management</h1>
         <button
-          onClick={() => { setEditingId(null); setFormData({ name: "", description: "", start_date: "", end_date: "", status: "Planning", skills: [] }); setIsModalOpen(true); }}
-          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition"
+          onClick={() => resetForm() || setIsModalOpen(true)}
+          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
         >
           + Add Project
         </button>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-2 mb-4 items-center">
+      <div className="flex flex-wrap gap-2 mb-4">
         <input
           type="text"
-          placeholder="Search by first 3 letters of name..."
+          placeholder="Search by first 3 letters..."
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           className="border p-2 rounded flex-1"
         />
-        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="border p-2 rounded">
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="border p-2 rounded"
+        >
           <option value="">All Status</option>
           <option value="Planning">Planning</option>
           <option value="Active">Active</option>
           <option value="Completed">Completed</option>
         </select>
-        <select value={filterSkill} onChange={(e) => setFilterSkill(e.target.value)} className="border p-2 rounded">
+        <select
+          value={filterSkill}
+          onChange={(e) => setFilterSkill(e.target.value)}
+          className="border p-2 rounded"
+        >
           <option value="">All Skills</option>
-          {skillsList.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          {skillsList.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -199,112 +241,158 @@ const ProjectPage = () => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th onClick={() => requestSort("name")} className="px-4 py-3 text-left text-sm font-semibold text-gray-700 cursor-pointer">
-                Name {getSortIndicator("name")}
-              </th>
-              <th onClick={() => requestSort("status")} className="px-4 py-3 text-left text-sm font-semibold text-gray-700 cursor-pointer">
-                Status {getSortIndicator("status")}
-              </th>
-              <th onClick={() => requestSort("start_date")} className="px-4 py-3 text-left text-sm font-semibold text-gray-700 cursor-pointer">
-                Start Date {getSortIndicator("start_date")}
-              </th>
-              <th onClick={() => requestSort("end_date")} className="px-4 py-3 text-left text-sm font-semibold text-gray-700 cursor-pointer">
-                End Date {getSortIndicator("end_date")}
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Skills</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
+              {["name", "status", "start_date", "end_date"].map((key) => (
+                <th
+                  key={key}
+                  onClick={() => requestSort(key)}
+                  className="px-4 py-2 cursor-pointer text-left font-semibold"
+                >
+                  {key.replace("_", " ").toUpperCase()}
+                  {sortConfig.key === key ? (sortConfig.direction === "asc" ? " ▲" : " ▼") : ""}
+                </th>
+              ))}
+              <th className="px-4 py-2 text-left font-semibold">Skills</th>
+              <th className="px-4 py-2 text-left font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {filteredProjects.map((project) => (
-              <tr key={project.id} className="hover:bg-gray-50 transition-colors">
-                {/* Name with first 3 letters highlight */}
-                <td className="px-4 py-2 text-gray-800 font-medium">
-                  {searchText && project.name.toLowerCase().startsWith(searchText.toLowerCase().slice(0, 3)) ? (
-                    <>
-                      <span className="bg-yellow-200">{project.name.slice(0, 3)}</span>
-                      {project.name.slice(3)}
-                    </>
-                  ) : (
-                    project.name
-                  )}
-                </td>
-                <td className="px-4 py-2">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${project.status === "Planning" ? "bg-yellow-100 text-yellow-800" :
-                      project.status === "Active" ? "bg-blue-100 text-blue-800" :
-                        "bg-green-100 text-green-800"
-                    }`}>{project.status}</span>
-                </td>
-                <td className="px-4 py-2 text-gray-600">{project.start_date?.split("T")[0]}</td>
-                <td className="px-4 py-2 text-gray-600">{project.end_date?.split("T")[0]}</td>
-                <td className="px-4 py-2 text-gray-600 max-w-xs truncate" title={project.skills?.map(s => s.name).join(", ")}>
-                  {project.skills?.map(s => s.name).join(", ") || "No skills"}
-                </td>
-
-                <td className="px-4 py-2 text-gray-600 max-w-xs truncate" title={project.skills?.map(s => `${s.name} (${s.min_level})`).join(", ")}>
-                  {project.skills?.map(s => `${s.name} (${s.min_level})`).join(", ") || "No skills"}
-                </td>
-
-
-                <td className="px-4 py-2 flex gap-2">
-                  <button onClick={() => openEditModal(project)} className="bg-yellow-400 text-white px-3 py-1 rounded hover:bg-yellow-500 transition">Edit</button>
-                  <button onClick={() => deleteProject(project.id)} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition">Delete</button>
-                </td>
-              </tr>
-            ))}
-            {filteredProjects.length === 0 && (
+            {filteredProjects.length ? (
+              filteredProjects.map((p) => (
+                <tr key={p.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-2">{p.name}</td>
+                  <td className="px-4 py-2">{p.status}</td>
+                  <td className="px-4 py-2">{p.start_date?.split("T")[0]}</td>
+                  <td className="px-4 py-2">{p.end_date?.split("T")[0]}</td>
+                  <td className="px-4 py-2">
+                    {p.skills?.map((s) => `${s.name} (${s.min_level})`).join(", ") || "—"}
+                  </td>
+                  <td className="px-4 py-2 flex gap-2">
+                    <button
+                      className="bg-yellow-400 text-white px-3 py-1 rounded"
+                      onClick={() => openEditModal(p)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="bg-red-500 text-white px-3 py-1 rounded"
+                      onClick={() => deleteProject(p.id)}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
               <tr>
-                <td colSpan={6} className="text-center text-gray-400 py-4">No projects found.</td>
+                <td colSpan={6} className="text-center py-4 text-gray-400">
+                  No projects found
+                </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
 
-      {/* Modal for Add/Edit Project */}
+      {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white rounded shadow-lg w-full max-w-2xl p-6 relative">
-            <button onClick={() => setIsModalOpen(false)} className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-lg">&times;</button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded w-full max-w-2xl relative">
+            <button
+              className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"
+              onClick={() => setIsModalOpen(false)}
+            >
+              &times;
+            </button>
             <h2 className="text-2xl font-bold mb-4">{editingId ? "Edit Project" : "Add Project"}</h2>
             <form onSubmit={handleSubmit} className="space-y-3">
-              <input name="name" placeholder="Project Name" value={formData.name} onChange={handleChange} className="border p-2 w-full rounded" required />
-              <textarea name="description" placeholder="Description" value={formData.description} onChange={handleChange} className="border p-2 w-full rounded" required />
+              <input
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Project Name"
+                className="border p-2 w-full rounded"
+                required
+              />
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                placeholder="Description"
+                className="border p-2 w-full rounded"
+                required
+              />
               <div className="flex gap-2">
-                <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} className="border p-2 w-1/2 rounded" />
-                <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} className="border p-2 w-1/2 rounded" />
+                <input
+                  type="date"
+                  name="start_date"
+                  value={formData.start_date}
+                  onChange={handleChange}
+                  className="border p-2 w-1/2 rounded"
+                />
+                <input
+                  type="date"
+                  name="end_date"
+                  value={formData.end_date}
+                  onChange={handleChange}
+                  className="border p-2 w-1/2 rounded"
+                />
               </div>
-              <select name="status" value={formData.status} onChange={handleChange} className="border p-2 w-full rounded">
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="border p-2 w-full rounded"
+              >
                 <option value="Planning">Planning</option>
                 <option value="Active">Active</option>
                 <option value="Completed">Completed</option>
               </select>
 
-              <h3 className="font-semibold">Skills (Drag to reorder)</h3>
+              {/* Skills Drag & Drop */}
+              <h3 className="font-semibold">Skills (drag to reorder)</h3>
               <DragDropContext onDragEnd={handleDragEnd}>
-                <Droppable droppableId="skillsList">
+                <Droppable droppableId="skills">
                   {(provided) => (
                     <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2">
-                      {formData.skills.map((skill, index) => (
-                        <Draggable key={index} draggableId={index.toString()} index={index}>
-                          {(provided) => (
+                      {formData.skills.map((s, index) => (
+                        <Draggable key={s.id} draggableId={s.id} index={index}>
+                          {(p) => (
                             <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
+                              ref={p.innerRef}
+                              {...p.draggableProps}
+                              {...p.dragHandleProps}
                               className="flex gap-2 items-center border p-2 rounded bg-gray-50 hover:bg-gray-100"
                             >
-                              <select value={skill.skill_id} onChange={(e) => handleSkillChange(index, "skill_id", e.target.value)} className="border p-1 flex-1 rounded" required>
+                              <select
+                                value={s.skill_id}
+                                onChange={(e) => handleSkillChange(index, "skill_id", e.target.value)}
+                                className="border p-1 rounded flex-1"
+                                required
+                              >
                                 <option value="">Select Skill</option>
-                                {skillsList.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                {skillsList.map((sk) => (
+                                  <option key={sk.id} value={sk.id}>
+                                    {sk.name}
+                                  </option>
+                                ))}
                               </select>
-                              <select value={skill.min_level} onChange={(e) => handleSkillChange(index, "min_level", e.target.value)} className="border p-1 rounded">
+                              <select
+                                value={s.min_level}
+                                onChange={(e) => handleSkillChange(index, "min_level", e.target.value)}
+                                className="border p-1 rounded"
+                              >
                                 <option value="Beginner">Beginner</option>
                                 <option value="Intermediate">Intermediate</option>
                                 <option value="Advanced">Advanced</option>
                                 <option value="Expert">Expert</option>
                               </select>
-                              <button type="button" onClick={() => removeSkill(index)} className="bg-red-500 text-white px-2 rounded">X</button>
+                              <button
+                                type="button"
+                                onClick={() => removeSkill(index)}
+                                className="bg-red-500 text-white px-2 rounded"
+                              >
+                                X
+                              </button>
                             </div>
                           )}
                         </Draggable>
@@ -315,8 +403,13 @@ const ProjectPage = () => {
                 </Droppable>
               </DragDropContext>
 
-              <button type="button" onClick={addSkill} className="bg-blue-500 text-white px-3 py-1 rounded">Add Skill</button>
-              <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded mt-2 hover:bg-green-600 transition">{editingId ? "Update Project" : "Create Project"}</button>
+              <button type="button" onClick={addSkill} className="bg-blue-500 text-white px-3 py-1 rounded">
+                Add Skill
+              </button>
+
+              <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded w-full hover:bg-green-600 mt-2">
+                {editingId ? "Update Project" : "Create Project"}
+              </button>
             </form>
           </div>
         </div>

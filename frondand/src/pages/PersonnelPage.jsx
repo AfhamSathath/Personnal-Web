@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import "react-toastify/dist/ReactToastify.css";
 import { Pencil, Trash2, Search } from "lucide-react";
 

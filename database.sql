@@ -1,12 +1,8 @@
--- ===================================
--- DATABASE
--- ===================================
+
 CREATE DATABASE  skillmatch;
 USE skillmatch;
 
--- ===================================
--- PERSONNEL TABLE
--- ===================================
+
 CREATE TABLE personnel (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
@@ -16,9 +12,7 @@ CREATE TABLE personnel (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- ===================================
--- SKILLS TABLE
--- ===================================
+
 CREATE TABLE skills (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL UNIQUE,
@@ -26,9 +20,7 @@ CREATE TABLE skills (
   description TEXT
 );
 
--- ===================================
--- PERSONNEL ↔ SKILLS (WITH PROFICIENCY)
--- ===================================
+
 CREATE TABLE personnel_skills (
   id INT AUTO_INCREMENT PRIMARY KEY,
   personnel_id INT NOT NULL,
@@ -45,9 +37,7 @@ CREATE TABLE personnel_skills (
     ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- ===================================
--- PROJECTS TABLE
--- ===================================
+
 CREATE TABLE projects (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
@@ -58,10 +48,7 @@ CREATE TABLE projects (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- ===================================
--- PROJECT ↔ REQUIRED SKILLS
--- (Used in Project Page)
--- ===================================
+
 CREATE TABLE project_skills (
   id INT AUTO_INCREMENT PRIMARY KEY,
   project_id INT NOT NULL,

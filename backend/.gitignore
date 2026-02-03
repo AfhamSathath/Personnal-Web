@@ -8,6 +8,11 @@ node_modules/
 package-lock.json
 yarn.lock
 
+# Build
+frondand/build/
+frondand/dist/
+backend/node_modules/
+
 # Logs
 logs/
 *.log
@@ -17,14 +22,6 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
-# IDE
-.vscode/
-.idea/
-*.swp
-
-
-# Jekyll
+# Jekyll (disable)
 _site/
 .jekyll-cache/
-.jekyll-metadata
-Gemfile.lock

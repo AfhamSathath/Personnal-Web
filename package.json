@@ -1,5 +1,13 @@
 {
+}
+  "name": "skillmatch",
+  "version": "1.0.0",
+  "description": "SkillMatch - Personal Web Project",
   "dependencies": {
     "react-hot-toast": "^2.6.0"
+  },
+  "scripts": {
+    "build": "cd frondand && npm run build",
+    "start": "cd backend && npm start"
   }
 }

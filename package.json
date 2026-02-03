@@ -1,8 +1,8 @@
 {
-}
   "name": "skillmatch",
   "version": "1.0.0",
   "description": "SkillMatch - Personal Web Project",
+  "private": true,
   "dependencies": {
     "react-hot-toast": "^2.6.0"
   },

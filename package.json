@@ -1,13 +1,21 @@
 {
-  "name": "skillmatch",
-  "version": "1.0.0",
-  "description": "SkillMatch - Personal Web Project",
+  "name": "skillmatch-frontend",
+  "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
     "react-hot-toast": "^2.6.0"
   },
   "scripts": {
-    "build": "cd frondand && npm run build",
-    "start": "cd backend && npm start"
-  }
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": ["react-app"]
+  },
+  "browserslist": ["last 2 versions"]
 }
